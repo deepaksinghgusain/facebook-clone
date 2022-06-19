@@ -1,43 +1,30 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
+const { readdirSync } = require('fs');
+const dotenv = require('dotenv');
+dotenv.config();
 
+// Middleware configuration
 const app = express();
+app.use(express.json());
+app.use(cors());
 
-//set up options of cors middleware
-// const options = {
-//     origin: 'http://localhost:3000',
-//     useSuccessState: 200,
-// }
+// routes
+readdirSync("./routes").map((r) => app.use("/", require("./routes/" + r)));
 
+// Database
+mongoose.connect(process.env.DATABASE_URL, {
+    useNewUrlParser: true
+}).then(() =>{
+    console.log("Database is connected");
+}).catch((err) =>{
+    console.log("error in connecting database", err);
+});
 
-const allowed = ["http://localhost:3000","Some other link"];
+// PORT
+const PORT = process.env.PORT || 8000;
 
-const options = (req, res) => {
-    let tmp;
-    let origin = req.header('Origin');
-    if(allowed.indexOf(origin) > -1) {
-        tmp = {
-            origin: true,
-            optionsSuccessStatus: 200
-        };
-    }else{
-        tmp = {
-            origin: "stupid"
-        };
-    }
-
-    res(null,tmp);
-} 
-
-app.use(cors(options));
-
-
-//routes
-const userRoute = require('./routes/user')
-
-app.use('/api',userRoute);
-
-
-app.listen(8000, () => {
-    console.log('server is listening');
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 })
